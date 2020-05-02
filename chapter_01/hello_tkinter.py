@@ -11,4 +11,8 @@ from tkinter.ttk import *
 root = Tk()
 label = Label(root, text="Hello, World")
 label.pack()
+button = Button(root, text="My Button")
+button.pack()
+label2 = Label(root, text="New Label")
+label2.pack()
 root.mainloop()
