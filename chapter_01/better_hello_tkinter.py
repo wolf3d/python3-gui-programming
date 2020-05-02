@@ -28,7 +28,7 @@ class HelloView(tk.Frame):
 
     def on_change(self):
         if self.name.get().strip():
-            self.hello_string.set("Hello " + self.name.get())
+            self.hello_string.set(f"Hello {self.name.get()}")
         else:
             self.hello_string.set("Hello, World")
 
