@@ -70,31 +70,33 @@ class DataRecordForm(tk.Frame):
 
         # line 1
         self.inputs['Date'] = LabelInput(recordinfo, "Date",
+            input_class=DateEntry,
             input_var=tk.StringVar())
         self.inputs['Date'].grid(row=0, column=0)
 
         self.inputs['Time'] = LabelInput(recordinfo, "Time",
-            input_class=ttk.Combobox, input_var=tk.StringVar(),
+            input_class=ValidatedCombobox, input_var=tk.StringVar(),
             input_args={"values":["8:00","12:00","16:00","20:00"]})
         self.inputs['Time'].grid(row=0, column=1)
 
         self.inputs['Technician'] = LabelInput(recordinfo,
-            "Technician", input_var=tk.StringVar())
+            "Technician", input_class=RequiredEntry,
+            input_var=tk.StringVar())
         self.inputs['Technician'].grid(row=0, column=2)
 
         # line 2
         self.inputs['Lab'] = LabelInput(recordinfo, "Lab",
-            input_class=ttk.Combobox, input_var=tk.StringVar(),
+            input_class=ValidatedCombobox, input_var=tk.StringVar(),
             input_args={"values": ["A","B","C","D","E"]})
         self.inputs['Lab'].grid(row=1, column=0)
 
         self.inputs['Plot'] = LabelInput(recordinfo, "Plot",
-            input_class=ttk.Combobox, input_var=tk.IntVar(),
-            input_args={"values": list(range(1,21))})
+            input_class=ValidatedCombobox, input_var=tk.StringVar(),
+            input_args={"values": [str(x) for x in range(1, 21)]})
         self.inputs['Plot'].grid(row=1, column=1)
 
         self.inputs['Seed sample'] = LabelInput(recordinfo,
-            "Seed sample", input_var=tk.StringVar())
+            "Seed sample", input_class=RequiredEntry, input_var=tk.StringVar())
         self.inputs['Seed sample'].grid(row=1, column=2)
 
         recordinfo.grid(row=0, column=0, sticky=(tk.W + tk.E))
@@ -103,20 +105,20 @@ class DataRecordForm(tk.Frame):
         environmentinfo = tk.LabelFrame(self, text="Environment Data")
         self.inputs['Humidity'] = LabelInput(
             environmentinfo, "Humidity (g/m³)",
-            input_class=tk.Spinbox, input_var=tk.DoubleVar(),
-            input_args={"from_": 0.5, "to": 52.0, "increment": .01})
+            input_class=ValidatedSpinbox, input_var=tk.DoubleVar(),
+            input_args={"from_": '0.5', "to": '52.0', "increment": '.01'})
         self.inputs['Humidity'].grid(row=0, column=0)
 
         self.inputs['Light'] = LabelInput(
             environmentinfo, "Light (klx)",
-            input_class=tk.Spinbox, input_var=tk.DoubleVar(),
-            input_args={"from_": 0.0, "to": 101.0, "increment": .01})
+            input_class=ValidatedSpinbox, input_var=tk.DoubleVar(),
+            input_args={"from_": '0.0', "to": '101.0', "increment": '.01'})
         self.inputs['Light'].grid(row=0, column=1)
 
         self.inputs['Temperature'] = LabelInput(
             environmentinfo, "Temperature (°C)",
-            input_class=tk.Spinbox, input_var=tk.DoubleVar(),
-            input_args={"from_": 4.0, "to": 41.0, "increment": .01})
+            input_class=ValidatedSpinbox, input_var=tk.DoubleVar(),
+            input_args={"from_": '4.0', "to": '41.0', "increment": '.01'})
         self.inputs['Temperature'].grid(row=0, column=2)
 
         self.inputs['Equipment Fault'] = LabelInput(
@@ -131,44 +133,53 @@ class DataRecordForm(tk.Frame):
         plantinfo = tk.LabelFrame(self, text="Plant Data")
         self.inputs['Plants'] = LabelInput(
             plantinfo, "Plants",
-            input_class=tk.Spinbox,
+            input_class=ValidatedSpinbox,
             input_var=tk.IntVar(),
-            input_args={"from_": 0, "to": 20})
+            input_args={"from_": '0', "to": '20'})
         self.inputs['Plants'].grid(row=0, column=0)
 
         self.inputs['Blossoms'] = LabelInput(
             plantinfo, "Blossoms",
-            input_class=tk.Spinbox,
+            input_class=ValidatedSpinbox,
             input_var=tk.IntVar(),
-            input_args={"from_": 0, "to": 1000})
+            input_args={"from_": '0', "to": '1000'})
         self.inputs['Blossoms'].grid(row=0, column=1)
 
         self.inputs['Fruit'] = LabelInput(
             plantinfo, "Fruit",
-            input_class=tk.Spinbox,
+            input_class=ValidatedSpinbox,
             input_var=tk.IntVar(),
-            input_args={"from_": 0, "to": 1000})
+            input_args={"from_": '0', "to": '1000'})
         self.inputs['Fruit'].grid(row=0, column=2)
+
+        # height data
+        # create variables to be updated for min/max height
+        # they can be referenced for min/max variables
+        min_height_var = tk.DoubleVar(value='-infinity')
+        max_height_var = tk.DoubleVar(value='infinity')
 
         self.inputs['Min Height'] = LabelInput(
             plantinfo, "Min Height (cm)",
-            input_class=tk.Spinbox,
+            input_class=ValidatedSpinbox,
             input_var=tk.DoubleVar(),
-            input_args={"from_": 0, "to": 1000, "increment": .01})
+            input_args={"from_": '0', "to": '1000', "increment": '.01',
+            "max_var": max_height_var, "focus_update_var": min_height_var})
         self.inputs['Min Height'].grid(row=1, column=0)
         
         self.inputs['Max Height'] = LabelInput(
             plantinfo, "Max Height (cm)",
-            input_class=tk.Spinbox,
+            input_class=ValidatedSpinbox,
             input_var=tk.DoubleVar(),
-            input_args={"from_": 0, "to": 1000, "increment": .01})
+            input_args={"from_": '0', "to": '1000', "increment": '.01',
+            "min_var": min_height_var, "focus_update_var": max_height_var})
         self.inputs['Max Height'].grid(row=1, column=1)
 
         self.inputs['Median Height'] = LabelInput(
             plantinfo, "Median Height (cm)",
-            input_class=tk.Spinbox,
+            input_class=ValidatedSpinbox,
             input_var=tk.DoubleVar(),
-            input_args={"from_": 0, "to": 1000, "increment": .01})
+            input_args={"from_": '0', "to": '1000', "increment": '.01',
+            "min_var": min_height_var, "max_var": max_height_var})
         self.inputs['Median Height'].grid(row=1, column=2)
 
         plantinfo.grid(row=2, column=0, sticky=(tk.W + tk.E))
