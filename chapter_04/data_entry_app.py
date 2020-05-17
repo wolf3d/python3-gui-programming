@@ -1,3 +1,4 @@
+from decimal import Decimal, InvalidOperation
 from datetime import datetime
 import os
 import csv
@@ -243,6 +244,135 @@ class ValidatedMixin:
         if not valid:
             self._focusout_invalid(event='focusout')
         return valid
+
+    
+class RequiredEntry(ValidatedMixin, ttk.Entry):
+    def _focusout_validate(self, event):
+        valid = True
+        if not self.get():
+            valid = False
+            self.error.set('A value is required')
+        return valid
+
+class DateEntry(ValidatedMixin, ttk.Entry):
+    def _key_validate(self, action, index, char, **kwargs):
+        valid = True
+
+        if action == '0':
+            valid = True
+        elif index in ('0', '1', '2', '3', '5', '6', '8', '9'):
+            valid = char.isdigit()
+        else:
+            valid = False
+        return valid
+
+    def _focusout_validate(self, event):
+        valid = True
+        if not self.get():
+            self.error.set('A value is required')
+            valid = False
+        try:
+            datetime.strptime(self.get(), '%Y-%m-%d')
+        except ValueError:
+            self.error.set('Invalid date')
+        return valid
+
+class ValidatedCombobox(ValidatedMixin, ttk.Combobox):
+    def _key_validate(self, proposed, action, **kwargs):
+        valid = True
+        # if the user tires to delete, just clear the field
+        if action == '0':
+            self.set('')
+            return True
+        # get our values list
+        values = self.cget('values')
+        # do a case-insensitive match against the entered text
+        matching = [
+            x for x in values
+            if x.lower().startswith(proposed.lower())
+        ]
+        if len(matching) == 0:
+            valid = False
+        elif len(matching) == 1:
+            self.set(matching[0])
+            self.icursor(tk.END)
+            valid = False
+        return valid
+
+    def _focusout_validate(self, **kwargs):
+        valid = True
+        if not self.get():
+            valid = False
+            self.error.set('A value is required')
+        return valid
+
+
+class ValidatedSpinbox(ValidatedMixin, tk.Spinbox)        :
+    def __init__(self, *args, min_var=None, max_var=None,
+                focus_update_var=None, from_='-Infinity',
+                to='Infinity', **kwargs):
+        super().__init__(*args, from_=from_, to=to, **kwargs)
+        self.resolution = Decimal(str(kwargs.get('increment',
+        '1.0')))
+        self.precision = (
+            self.resolution
+            .normalize()
+            .as_tuple()
+            .exponent
+        )
+    
+    def _key_validate(self, char, index, current,
+                    proposed, action, **kwargs):
+        valid = True
+        min_val = self.cget('from')
+        max_val = self.cget('to')
+        no_negative = min_val >= 0
+        no_decimal = self.precision >= 0
+
+        if action == '0':
+            return True
+        
+        # first, filter out obviously invalid keystrokes
+        if any([
+            (char not in ('-1234567890.')),
+            (char == '-' and (no_negative or index != '0')),
+            (char == '.' and (no_decimal or '.' in current))
+        ]):
+            return False
+        
+        # at this point proposed is either '-'. '.', '-.',
+        # or a valid Decimal string
+        if proposed in '-.':
+            return True
+        
+        # proposed is a valid Decimal string
+        # convert to Decimal and check more:
+        proposed = Decimal(proposed)
+        proposed_precision = proposed.as_tuple().exponent
+
+        if any([
+            (proposed > max_val),
+            (proposed_precision < self.precision)
+        ]):
+            return False
+        return valid
+
+    def _focusout_validate(self, **kwargs):
+        valid = True
+        value = self.get()
+        min_val = self.cget('from')
+
+        try:
+            value = Decimal(value)
+        except InvalidOperation:
+            self.error.set('Invalid number string: {}'.format(value))
+            return False
+        
+        if value < min_val:
+            self.error.set('Value is too lof (min {})'.format(min_val))
+            valid = False
+        return valid
+
 
 class Application(tk.Tk):
     """Application root window"""
