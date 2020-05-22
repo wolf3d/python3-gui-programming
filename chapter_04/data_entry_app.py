@@ -444,6 +444,7 @@ class DataRecordForm(tk.Frame):
         lab = self.inputs['Lab'].get()
         time = self.inputs['Time'].get()
         technician = self.inputs['Technician'].get()
+        plot = self.inputs['Plot'].get()
         plot_values = self.inputs['Plot'].input.cget('values')
 
         # clear all values
