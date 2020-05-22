@@ -1,7 +1,7 @@
-from decimal import Decimal, InvalidOperation
 from datetime import datetime
 import os
 import csv
+from decimal import Decimal, InvalidOperation
 import tkinter as tk
 from tkinter import ttk
 
@@ -24,7 +24,7 @@ class ValidatedMixin:
         self.config(foreground=('red' if on else 'black'))
 
     def _validate(self, proposed, current, char, event, index,
-    action):
+     action):
         self._toggle_error(False)
         self.error.set('')
         valid = True
@@ -73,7 +73,7 @@ class DateEntry(ValidatedMixin, ttk.Entry):
         elif index in ('0', '1', '2', '3', '5', '6', '8', '9'):
             valid = char.isdigit()
         elif index in ('4', '7'):
-            valid= char == '-'
+            valid = char == '-'
         else:
             valid = False
         return valid
@@ -87,6 +87,7 @@ class DateEntry(ValidatedMixin, ttk.Entry):
             datetime.strptime(self.get(), '%Y-%m-%d')
         except ValueError:
             self.error.set('Invalid date')
+            valid = False
         return valid
 
     
@@ -193,7 +194,6 @@ class ValidatedSpinbox(ValidatedMixin, tk.Spinbox)        :
         max_val = self.cget('to')
         no_negative = min_val >= 0
         no_decimal = self.precision >= 0
-
         if action == '0':
             return True
         
@@ -220,12 +220,14 @@ class ValidatedSpinbox(ValidatedMixin, tk.Spinbox)        :
             (proposed_precision < self.precision)
         ]):
             return False
+
         return valid
 
     def _focusout_validate(self, **kwargs):
         valid = True
         value = self.get()
         min_val = self.cget('from')
+        max_val = self.cget('to')
 
         try:
             value = Decimal(value)
@@ -234,12 +236,11 @@ class ValidatedSpinbox(ValidatedMixin, tk.Spinbox)        :
             return False
         
         if value < min_val:
-            self.error.set('Value is too lof (min {})'.format(min_val))
-            valid = False
-        max_val = self.cget('to')
+            self.error.set('Value is too low (min {})'.format(min_val))
+            valid = False        
         if value > max_val:
             self.error.set('Value is too high (max {})'.format(max_val))
-            valid = False
+
         return valid
 
 
@@ -263,10 +264,9 @@ class LabelInput(tk.Frame):
         self.input = input_class(self, **input_args)
         self.input.grid(row=1, column=0, sticky=(tk.W + tk.E))
         self.columnconfigure(0, weight=1)
-
         self.error = getattr(self.input, 'error', tk.StringVar())
         self.error_label = ttk.Label(self, textvariable=self.error)
-        self.error_label.grid(row=2, column=2, sticky=(tk.W + tk.E))
+        self.error_label.grid(row=2, column=0, sticky=(tk.W + tk.E))
 
     def grid(self, sticky=(tk.E + tk.W), **kwargs):
         super().grid(sticky=sticky, **kwargs)
@@ -329,7 +329,7 @@ class DataRecordForm(tk.Frame):
         # line 2
         self.inputs['Lab'] = LabelInput(recordinfo, "Lab",
             input_class=ValidatedCombobox, input_var=tk.StringVar(),
-            input_args={"values": ["A","B","C","D","E"]})
+            input_args={"values": ["A", "B", "C", "D", "E"]})
         self.inputs['Lab'].grid(row=1, column=0)
 
         self.inputs['Plot'] = LabelInput(recordinfo, "Plot",
@@ -354,13 +354,13 @@ class DataRecordForm(tk.Frame):
         self.inputs['Light'] = LabelInput(
             environmentinfo, "Light (klx)",
             input_class=ValidatedSpinbox, input_var=tk.DoubleVar(),
-            input_args={"from_": '0.0', "to": '101.0', "increment": '.01'})
+            input_args={"from_": '0', "to": '100', "increment": '.01'})
         self.inputs['Light'].grid(row=0, column=1)
 
         self.inputs['Temperature'] = LabelInput(
             environmentinfo, "Temperature (°C)",
             input_class=ValidatedSpinbox, input_var=tk.DoubleVar(),
-            input_args={"from_": '4.0', "to": '41.0', "increment": '.01'})
+            input_args={"from_": '4', "to": '40', "increment": '.01'})
         self.inputs['Temperature'].grid(row=0, column=2)
 
         self.inputs['Equipment Fault'] = LabelInput(
@@ -474,7 +474,7 @@ class Application(tk.Tk):
 
     def on_save(self):
         datestring = datetime.today().strftime("%Y-%m-%d")
-        filename = "abq_data_records_{}.csv".format(datestring)
+        filename = "abq_data_record_{}.csv".format(datestring)
         newfile = not os.path.exists(filename)
         data = self.recordform.get()
         with open(filename, 'a') as filehandle:
