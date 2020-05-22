@@ -438,8 +438,30 @@ class DataRecordForm(tk.Frame):
         return data
     
     def reset(self):
+        """resets the form entries"""
+
+        # gather the values to keep for each lab
+        lab = self.inputs['lab'].get()
+        time = self.inputs['Time'].get()
+        technician = self.inputs['Technician'].get()
+        plot_values = self.inputs['Plot'].input.cget('values')
+
+        # clear all values
         for widget in self.inputs.values():
             widget.set('')
+        
+        current_date = datetime.today().strftime('%Y-%m-%d')
+        self.inputs['Date'].set(current_date)
+        self.inputs['Time'].input.focus()
+
+        # check if we need to put our values back, then do it
+        if plot not in ('', plot_values[-1]):
+            self.inputs['Lab'].set(lab)
+            self.inputs['Time'].set(time)            
+            self.inputs['Technician'].set(technician)
+            next_plot_index = plot_values.index(plot) + 1
+            self.inputs['Plot'].set(plot_values[next_plot_index])
+            self.inputs['Seed sample'].input.focus()
 
     def get_errors(self):
         """Get a list of field errors in the form"""
