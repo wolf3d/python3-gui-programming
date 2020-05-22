@@ -92,6 +92,7 @@ class DateEntry(ValidatedMixin, ttk.Entry):
 
     
 class RequiredEntry(ValidatedMixin, ttk.Entry):
+
     def _focusout_validate(self, event):
         valid = True
         if not self.get():
@@ -137,12 +138,7 @@ class ValidatedSpinbox(ValidatedMixin, tk.Spinbox)        :
         super().__init__(*args, from_=from_, to=to, **kwargs)
         self.resolution = Decimal(str(kwargs.get('increment',
         '1.0')))
-        self.precision = (
-            self.resolution
-            .normalize()
-            .as_tuple()
-            .exponent
-        )
+        self.precision = self.resolution.normalize().as_tuple().exponent
         # there should always be a variable
         # or some of our code will fail
         self.variable = kwargs.get('textvariable') or tk.DoubleVar()
@@ -296,6 +292,7 @@ class LabelInput(tk.Frame):
                 self.input.deselect()
         elif type(self.input) == tk.Text:
             self.input.delete('1.0', tk.END)
+            self.input.insert('1.0', value)
         else: # input must be an entry-type widget with no variable...
             self.input.delete(0, tk.END)
             self.input.insert(0, value)
@@ -442,7 +439,19 @@ class DataRecordForm(tk.Frame):
     
     def reset(self):
         for widget in self.inputs.values():
-            widget.set('')   
+            widget.set('')
+
+    def get_errors(self):
+        """Get a list of field errors in the form"""
+
+        errors = {}
+        for key, widget in self.inputs.items():
+            if hasattr(widget.input, 'trigger_focusout_validation'):
+                widget.input.trigger_focusout_validation()
+            if widget.error.get():
+                errors[key] = widget.error.get()
+
+        return errors
 
 
 class Application(tk.Tk):
@@ -473,6 +482,16 @@ class Application(tk.Tk):
         self.records_saved = 0
 
     def on_save(self):
+        # Check for errors first
+
+        errors = self.recordform.get_errors()
+        if errors:
+            self.status.set(
+                "Cannot save, error in fields: {}"
+                .format(', '.join(errors.keys()))
+            )
+            return False
+
         datestring = datetime.today().strftime("%Y-%m-%d")
         filename = "abq_data_record_{}.csv".format(datestring)
         newfile = not os.path.exists(filename)
