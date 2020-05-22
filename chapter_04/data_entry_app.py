@@ -441,7 +441,7 @@ class DataRecordForm(tk.Frame):
         """resets the form entries"""
 
         # gather the values to keep for each lab
-        lab = self.inputs['lab'].get()
+        lab = self.inputs['Lab'].get()
         time = self.inputs['Time'].get()
         technician = self.inputs['Technician'].get()
         plot_values = self.inputs['Plot'].input.cget('values')
